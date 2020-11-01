@@ -78,5 +78,13 @@ def repeat_list_until_length(list_arg: list, length: int) -> list:
     return list_arg
 
 
+def caesar_cipher_encrypt(text: str, shift_amount: int):
+    return "".join([chr((ord(char) + shift_amount) % 256) if char != '\n' else "\n" for char in text])
+
+
+def caesar_cipher_decrypt(text: str, shift_amount: int):
+    return "".join([chr((ord(char) + 256 - shift_amount) % 256) if char != '\n' else "\n" for char in text])
+
+
 number_of_digits = 2500
 g = 7
