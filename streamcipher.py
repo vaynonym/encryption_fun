@@ -2,9 +2,7 @@
 class StreamCipher:
 
     def __init__(self, key: str, initial_index: int, number_of_digits: int):
-        while len(key) < number_of_digits:
-            key = "0" + key
-        self.key = key
+        self.key = key.zfill(number_of_digits)
         self.index = initial_index
         self.number_of_digits = number_of_digits
 
@@ -42,12 +40,19 @@ class StreamCipher:
 
 class VignereStreamCipher(StreamCipher):
 
+    CHARACTER_SPACE_START = 33
+    CHARACTER_SPACE_END = 126
+    CHARACTER_SPACE_SIZE = CHARACTER_SPACE_END - CHARACTER_SPACE_START
+
     def __init__(self, key: str, index: int, number_of_digits: int):
         super().__init__(key, index, number_of_digits)
 
+    def _keep_in_character_space(self, number: int):
+        return ((number + self.CHARACTER_SPACE_SIZE - self.CHARACTER_SPACE_START) % self.CHARACTER_SPACE_SIZE) + self.CHARACTER_SPACE_START
+
     def _encryption_algorithm(self, text, key):
 
-        sequence_of_shifts = [key[i:i+2]
+        sequence_of_shifts = [int(key[i:i+2]) % self.CHARACTER_SPACE_SIZE
                               for i in range(0, len(key), 2)]
 
         shifted_text = ""
@@ -56,14 +61,14 @@ class VignereStreamCipher(StreamCipher):
         self.__repeat_list_until_length(sequence_of_shifts, len(text))
 
         for i in range(len(text)):
-            shifted_text += chr((ord(text[i]) +
-                                 int(sequence_of_shifts[i])) % 256)
+            shifted_text += chr(self._keep_in_character_space((ord(text[i]) + sequence_of_shifts[i]))) if ord(
+                text[i]) >= self.CHARACTER_SPACE_START and ord(text[i]) < self.CHARACTER_SPACE_END else text[i]
 
         return shifted_text
 
     def _decryption_algorithm(self, text, key):
 
-        sequence_of_shifts = [key[i:i+2]
+        sequence_of_shifts = [int(key[i:i+2]) % self.CHARACTER_SPACE_SIZE
                               for i in range(0, len(key), 2)]
         shifted_text = ""
 
@@ -71,18 +76,17 @@ class VignereStreamCipher(StreamCipher):
         self.__repeat_list_until_length(sequence_of_shifts, len(text))
 
         for i in range(len(text)):
-            shifted_text += chr((ord(text[i]) + 256 -
-                                 int(sequence_of_shifts[i])) % 256)
+            shifted_text += chr(self._keep_in_character_space(ord(text[i]) + self.CHARACTER_SPACE_SIZE - sequence_of_shifts[i])) if ord(
+                text[i]) >= self.CHARACTER_SPACE_START and ord(text[i]) < self.CHARACTER_SPACE_END else text[i]
 
         return shifted_text
 
     def __repeat_list_until_length(self, list_arg: list, length: int) -> list:
-        size_difference = length - len(list_arg)
+        size_difference=length - len(list_arg)
 
         if size_difference > len(list_arg):
-            factor: int = int(size_difference / len(list_arg))
+            factor: int=int(size_difference / len(list_arg))
             size_difference -= factor * len(list_arg)
             list_arg += factor * list_arg
 
         list_arg += list_arg[0:size_difference]
-        return list_arg
